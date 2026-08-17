@@ -85,9 +85,11 @@ Therefore, the ML model predicts whether a student is Placed or Not Placed.
 
 Pipeline Architecture:
 
-<img width="544" height="649" alt="Screenshot 2026-08-17 120550" src="https://github.com/user-attachments/assets/c5ffaf66-dcd2-45f1-9058-4d02fae79ee7" />
-<img width="402" height="637" alt="Screenshot 2026-08-17 120616" src="https://github.com/user-attachments/assets/21bd0923-48f7-4879-961e-15ed64d57675" />
-<img width="386" height="310" alt="Screenshot 2026-08-17 120635" src="https://github.com/user-attachments/assets/6776e3f3-ce32-41a8-8c18-7a2d6275b1d4" />
+
+<img width="1202" height="647" alt="Screenshot 2026-08-17 120853" src="https://github.com/user-attachments/assets/2feabb77-60ab-4bb7-96a8-a040ced68358" />
+<img width="1210" height="636" alt="Screenshot 2026-08-17 120920" src="https://github.com/user-attachments/assets/94a5914e-c813-4188-9b53-1dff92c37935" />
+<img width="1196" height="310" alt="Screenshot 2026-08-17 120938" src="https://github.com/user-attachments/assets/4da9f60c-aa48-4ff8-bf4c-1ec3712d15a7" />
+
 
 
 1. **What is the entity in your Feast implementation?**
