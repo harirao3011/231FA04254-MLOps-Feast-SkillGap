@@ -1,4 +1,4 @@
-[pipeline_diagram.txt](https://github.com/user-attachments/files/31131623/pipeline_diagram.txt)Name: D Hari Rao
+Name: D Hari Rao
 Register Number: 231FA04254
 Section: 15
 
@@ -84,86 +84,10 @@ Higher Studies        → 0
 Therefore, the ML model predicts whether a student is Placed or Not Placed.
 
 Pipeline Architecture:
-CURRICULUM-INDUSTRY PLACEMENT ML PIPELINE
 
-Original CSV
-    |
-    v
-Load Dataset
-    |
-    v
-Data Validation
-    |
-    +--> Check missing values / duplicates / target distribution
-    |
-    v
-Feature Engineering
-    |
-    +--> technical_skill_avg
-    +--> soft_skill_avg
-    +--> experience_index
-    +--> skill_strength_avg
-    +--> industry_alignment_score
-    |
-    v
-Select Model Features
-    |
-    +--> Numerical features --> median imputation --> StandardScaler
-    |
-    +--> Gender --> most-frequent imputation --> OneHotEncoder
-    |
-    v
-ColumnTransformer
-    |
-    v
-Logistic Regression
-(class_weight='balanced')
-    |
-    +--> Train/Test split (80/20, stratified)
-    |
-    v
-Evaluation
-    |
-    +--> Accuracy
-    +--> Precision
-    +--> Recall
-    +--> F1-score
-    +--> ROC-AUC
-    +--> Confusion Matrix
-    |
-    v
-Prediction
-
-FEAST VERSION
-
-Feature Engineering
-    |
-    v
-skill_features.parquet
-    |
-    v
-Feast Entity: Participant_ID
-    |
-    v
-Feast FileSource
-    |
-    v
-FeatureView: skill_gap_features
-    |
-    +--------------------------+
-    |                          |
-    v                          v
-Historical Retrieval       Materialization
-    |                          |
-    v                          v
-ML Model Training         SQLite Online Store
-                               |
-                               v
-                       Online Feature Retrieval
-                               |
-                               v
-                           Prediction
-
+<img width="544" height="649" alt="Screenshot 2026-08-17 120550" src="https://github.com/user-attachments/assets/c5ffaf66-dcd2-45f1-9058-4d02fae79ee7" />
+<img width="402" height="637" alt="Screenshot 2026-08-17 120616" src="https://github.com/user-attachments/assets/21bd0923-48f7-4879-961e-15ed64d57675" />
+<img width="386" height="310" alt="Screenshot 2026-08-17 120635" src="https://github.com/user-attachments/assets/6776e3f3-ce32-41a8-8c18-7a2d6275b1d4" />
 
 
 1. **What is the entity in your Feast implementation?**
