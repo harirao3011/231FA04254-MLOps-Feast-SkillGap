@@ -90,240 +90,126 @@ Pipeline Architecture:
 <img width="1210" height="636" alt="Screenshot 2026-08-17 120920" src="https://github.com/user-attachments/assets/94a5914e-c813-4188-9b53-1dff92c37935" />
 <img width="1196" height="310" alt="Screenshot 2026-08-17 120938" src="https://github.com/user-attachments/assets/4da9f60c-aa48-4ff8-bf4c-1ec3712d15a7" />
 
+**Results**
+Historical Feature Output
+
+The engineered feature dataset was created from the original 50,000-row CSV and stored as:
+
+data/skill_features.parquet
+
+The historical feature data contains the Feast entity, timestamp, and engineered features required for model training.
+
+Example historical feature output:
+
+Participant_ID  event_timestamp        CGPA  technical_skill_avg  soft_skill_avg  experience_index  skill_strength_avg  Industry_Expectation  industry_alignment_score
+1               2025-01-01 00:00:00    6.50        67.0                64.2              ...             66.16                  78                  69.71
+2               2025-01-01 00:00:01    7.20        72.5                70.4              ...             71.87                  82                  74.91
+3               2025-01-01 00:00:02    8.10        81.0                76.8              ...             79.74                  85                  81.32
+
+The historical feature dataset is retrieved using Feast's historical feature retrieval mechanism and is used as the input for model training.
+
+Model Accuracy
+
+The dataset was divided into:
+
+Training data = 80%
+Testing data  = 20%
+
+A stratified split was used because the placement classes are highly imbalanced.
+
+Seven classification models were trained and compared.
+
+Model	Accuracy	Precision	Recall	F1-Score	ROC-AUC
+HistGradientBoosting	97.73%	98.24%	99.46%	98.85%	97.48%
+Gradient Boosting	97.65%	98.32%	99.29%	98.80%	97.37%
+Random Forest	96.71%	99.13%	97.50%	98.30%	97.38%
+Extra Trees	94.87%	99.65%	95.09%	97.32%	97.22%
+Decision Tree	93.44%	99.72%	93.56%	96.54%	92.24%
+Logistic Regression	92.73%	99.93%	92.63%	96.14%	97.87%
+Linear SVM	92.35%	99.94%	92.23%	95.93%	97.87%
+
+The HistGradientBoosting model was selected as the best model because it achieved the highest F1-score.
+
+The final test accuracy was:
+
+97.73%
+
+The confusion matrix of the selected model was:
+
+[[  43   174]
+ [  53  9730]]
+
+This shows the model's performance on the two target classes:
+
+0 = Not Placed / Higher Studies
+1 = Placed
+
+Because the dataset is highly imbalanced, F1-score, Recall and ROC-AUC were also considered rather than using accuracy alone.
+
+Online Feature Output
+
+After creating the Feast FeatureView, the historical feature data can be materialized into the local SQLite online store.
+
+The online features are retrieved using Feast's online retrieval mechanism.
+
+Example:
+
+Participant_ID: 1
 
 
-1. **What is the entity in your Feast implementation?**
+Age: 21
+Degree_Year: 2026
+CGPA: 5.71
+Gender: Male
+technical_skill_avg: 63.00
+soft_skill_avg: 68.80
+experience_index: 46.17
+skill_strength_avg: 64.74
+Industry_Expectation: 79.00
+industry_alignment_score: 69.02
 
-The entity in the Feast implementation is Participant_ID.
+The online retrieval flow is:
 
-Each row in the dataset represents one student/participant, and Participant_ID uniquely identifies that student. Feast uses this entity to associate the feature values with the correct student.
-
-Entity:
-Participant_ID
-2. List the features stored in your FeatureView.
-
-The skill_gap_features FeatureView stores the following features:
-
-Feature	Meaning
-age	Age of the student
-degree_year	Year of the student's degree
-cgpa	Student CGPA
-technical_skill_avg	Average score of the student's technical skills
-soft_skill_avg	Average score of the student's soft skills
-experience_index	Combined score representing internships, projects, certifications and hackathons
-skill_strength_avg	Combined technical and soft-skill strength
-industry_expectation	Industry expectation score
-industry_alignment_score	Overall alignment between student skills and industry expectations
-gender	Student gender
-
-The target variable placement_target is used for the machine-learning model but is not treated as a predictive Feast feature, because it is the label that the model is trying to predict.
-
-3. Explain how one feature was calculated.
-
-One important engineered feature is technical_skill_avg.
-
-It is calculated as the average of the student's ten technical skill scores:
-
-technical_skill_avg = (
-    Programming_Skill +
-    DSA_Skill +
-    DBMS_Skill +
-    OS_Skill +
-    CN_Skill +
-    Web_Development +
-    Cloud_Computing +
-    AI_ML +
-    Cybersecurity +
-    DevOps
-) / 10
-
-Therefore, technical_skill_avg provides a single overall measure of the student's technical ability.
-
-Similarly, soft_skill_avg is calculated from Communication, Teamwork, Problem Solving, Critical Thinking and Leadership.
-
-4. What is the difference between your original dataset and the feature dataset?
-
-The original dataset contains the complete student and curriculum-industry information, including raw skill values, experience information, placement information and other descriptive columns.
-
-The feature dataset is a smaller, ML-ready dataset created specifically for the Feast feature store.
-
-The transformation is:
-
-Original Dataset
-        ↓
-Feature Engineering
-        ↓
-Selected + Derived Features
-        ↓
-skill_features.parquet
-
-The feature dataset contains the entity Participant_ID, a timestamp required for Feast historical retrieval, and the engineered features used by the model.
-
-The target Placement_Status is converted into a binary placement_target:
-
-Placed              → 1
-Not Placed          → 0
-Higher Studies      → 0
-
-The original raw columns are therefore reduced into a consistent set of reusable ML features.
-
-5. What is the purpose of the offline store?
-
-The offline store contains historical feature data.
-
-In this project, the feature data is stored in a Parquet file and used for historical feature retrieval and model training.
-
-Its main purpose is to answer questions such as:
-
-“What were the feature values for this student at a particular point in time?”
-
-The offline data is therefore useful for:
-
-historical training data
-point-in-time feature retrieval
-model training
-avoiding manual reconstruction of features
-6. What is the purpose of the online store?
-
-The online store stores the latest feature values in a format optimized for fast retrieval.
-
-In this project, Feast uses a SQLite-based online store for local development.
-
-It is used when the model needs features for a new prediction.
-
-For example:
-
-Participant_ID
-      ↓
-Feast Online Store
-      ↓
-Current Feature Values
-      ↓
-ML Model
-      ↓
-Prediction
-
-The online store therefore supports fast feature retrieval during prediction/inference.
-
-7. What is the purpose of feast apply?
-
-feast apply registers and applies the Feast definitions in the project.
-
-It reads the Feast configuration and feature definitions and creates or updates objects such as:
-
-Entity
-Data Source
-Feature View
-
-In this project, it makes Feast aware of the Participant_ID entity, the Parquet data source and the skill_gap_features FeatureView.
-
-In simple terms:
-
-feast apply tells Feast what features and entities exist in the feature store and registers those definitions.
-
-8. What does materialization do?
-
-Materialization copies historical feature data from the offline store into the online store.
-
-The flow is:
-
-Parquet Offline Data
-        ↓
-   Materialization
-        ↓
+Feast FeatureView
+       ↓
+Materialization
+       ↓
 SQLite Online Store
-
-After materialization, the latest feature values can be retrieved efficiently using Feast's online retrieval mechanism.
-
-In this project, materialization makes the engineered student features available for online prediction.
-
-9. What is the advantage of retrieving features through Feast instead of manually calculating them separately during training and prediction?
-
-The main advantage is consistency.
-
-Without Feast, the developer might calculate the features one way during training and differently during prediction.
-
-For example:
-
-Training:
-Raw Data → Calculate Features A → Model
-
-
-Prediction:
-New Data → Calculate Features B → Model
-
-This can create inconsistent results.
-
-With Feast:
-
-             Same Feature Definitions
-                      ↓
-        +-------------+-------------+
-        ↓                           ↓
-Historical Retrieval          Online Retrieval
-        ↓                           ↓
- Model Training              Model Prediction
-
-Therefore, Feast helps provide:
-
-consistent feature definitions
-reusable features
-reduced duplicate feature-engineering code
-less chance of training-serving mismatch
-easier model deployment
-centralized feature management
-reproducible ML workflows
-
-This is especially useful when the same features must be used repeatedly by multiple models.
-
-10. State two limitations of your current dataset.
-
-Limitation 1 – Highly imbalanced placement target
-
-The dataset contains a very large number of Placed records compared with Not Placed and Higher Studies records. Therefore, a model can achieve high accuracy while still performing poorly on the minority class.
-
-To address this, the ML pipeline uses techniques such as:
-
-class_weight="balanced"
-
-and evaluates precision, recall, F1-score and ROC-AUC rather than relying only on accuracy.
-
-Limitation 2 – No real event timestamp
-
-The original dataset does not contain a genuine timestamp representing when a student's skill or placement information was observed.
-
-For the Feast demonstration, a deterministic timestamp is generated so that historical feature retrieval can be demonstrated.
-
-A real production system should use actual timestamps from curriculum updates, assessments, internships, job-market observations or placement events.
-
-11. State two ways your feature store could be improved when more curriculum and industry evidence becomes available.
-
-Improvement 1 – Add time-based industry demand features
-
-As more industry data becomes available, the FeatureView could include historical demand information such as:
-
-monthly_skill_demand
-skill_demand_growth
-number_of_job_postings
-skill_demand_trend
-
-This would allow the model to understand how industry requirements change over time.
-
-Improvement 2 – Add curriculum coverage and skill-gap features
-
-More curriculum evidence could be incorporated to calculate features such as:
-
-curriculum_skill_coverage
-industry_skill_coverage
-curriculum_industry_gap
-skill_priority_score
-
-For example:
-
-Industry Demand
-       +
-Curriculum Coverage
        ↓
-Skill Gap Score
+get_online_features()
        ↓
-Student Skill Gap Prediction
+Student Features
+       ↓
+Best ML Model
+       ↓
+Placement Prediction
+
+For the final demonstration student used by the ML pipeline, the HistGradientBoosting model predicted:
+
+Prediction: PLACED
+
+with an estimated placement probability of approximately:
+
+99.90%
+Final Result Summary
+Dataset
+   ↓
+Feature Engineering
+   ↓
+Feast Historical Features
+   ↓
+Train/Test Split
+   ↓
+7 ML Models
+   ↓
+Model Comparison
+   ↓
+Best Model: HistGradientBoosting
+   ↓
+Accuracy: 97.73%
+   ↓
+Feast Materialization
+   ↓
+Online Feature Retrieval
+   ↓
+Placement Prediction
